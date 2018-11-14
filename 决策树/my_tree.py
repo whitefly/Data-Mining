@@ -33,5 +33,5 @@ def main(nums):
 
 
 if __name__ == '__main__':
-    my_nums = [1, 1, 1, 1, 1, 2, 2, 2, 2]
-    main(my_nums)
+    my_nums = [1, 1, 0, 0, 0]
+    print(get_inpurity(my_nums))
