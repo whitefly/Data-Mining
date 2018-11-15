@@ -1,9 +1,11 @@
+"""
+将dict表示的决策树 可视化
+"""
 import matplotlib.pylab as plt
 import matplotlib
 
 # 能够显示中文
-matplotlib.rcParams['font.sans-serif'] = ['SimHei']
-matplotlib.rcParams['font.serif'] = ['SimHei']
+matplotlib.rcParams['font.sans-serif'] = ['Microsoft YaHei']
 
 # 分叉节点，也就是决策节点
 decisionNode = dict(boxstyle="sawtooth", fc="0.8")

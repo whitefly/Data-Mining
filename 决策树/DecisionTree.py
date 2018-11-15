@@ -2,8 +2,6 @@
 决策树思想: 选出最优属性,每次划分.直到要划分的数据集都为同一label 或者 所有属性已都使用完
 算法实现: <机器学习实战>采用list来作为数据集,但是感觉完全可以用pandas来实现,所以尝试用pandas实现
 """
-from pprint import pprint
-
 import pandas as pd
 import numpy as np
 
@@ -93,11 +91,12 @@ def create_tree(data: pd.DataFrame) -> dict:
 
 
 if __name__ == '__main__':
-    # data = pd.read_csv('book1.txt')
-    # data = pd.read_csv('book2.txt')
-    data = pd.read_csv('dataSet1.txt', delimiter='\t')
+    basefold = '../决策树数据集/'
+    # data = pd.read_csv(basefold+'实战1.txt') #<实战>数据1
+    # data = pd.read_csv(basefold+'实战2.txt') #<实战>数据2
+    data = pd.read_csv(basefold + '西瓜书2.0.txt', delimiter='\t')  # <西瓜书>数据2.0
     label_name = 'label'
     result = create_tree(data)
-    from .draw import createPlot
+    from draw import createPlot
 
-    createPlot(result)  # 字典表示的数组可视化
+    createPlot(result)  # 字典表示的树可视化

@@ -1,3 +1,6 @@
+"""
+测试信息熵是否可以用来表示不纯度?
+"""
 from math import log
 from collections import Counter
 
