@@ -1,3 +1,7 @@
+"""
+基于numpy实现的pca
+为了实现这个,把考研的线代代数整体复习了一般 /(ㄒoㄒ)/~~
+"""
 import numpy as np
 import re
 import matplotlib.pyplot as  plt
@@ -52,26 +56,13 @@ def my_pac(data, k=1):
 
 
 if __name__ == '__main__':
-    # data = loadtxt('testSet.txt')
-    # axes1 = plt.subplot(311)
-    # axes1.scatter(data[0], data[1], alpha=0.2, s=5)
-    #
-    # # 降维后的数据
-    # new_data = my_pac(data)
-    # axes2 = plt.subplot('313')
-    # axes2.scatter(new_data[0], np.full((1, len(new_data[0])), 1), alpha=0.2, s=5)
-    #
-    # plt.show()
-    from sklearn.decomposition import PCA
+    data = loadtxt('实战数据集.txt')
+    axes1 = plt.subplot(311)
+    axes1.scatter(data[0], data[1], alpha=0.2, s=5)
 
-    data = loadtxt('testSet.txt', 'row')  # 需要单个数据为行向量
+    # 降维后的数据
+    new_data = my_pac(data)
+    axes2 = plt.subplot('313')
+    axes2.scatter(new_data[0], np.full((1, len(new_data[0])), 1), alpha=0.2, s=5)
 
-    pca = PCA(n_components=1)  # 设置k
-    new_data = pca.fit_transform(data)  # 转化数据
-    axes1 = plt.subplot(111)
-
-    print("降维的方差为:", pca.explained_variance_)
-    print("降维后的纬度为", pca.n_components_)
-
-    axes1.scatter(new_data, np.full((1, len(new_data)), 1), alpha=0.2, s=5)
     plt.show()
