@@ -9,8 +9,7 @@
 """
 from pprint import pprint
 
-import numpy as  np
-import pandas as pd
+import numpy as np
 
 
 def predict(data, col_index, threshold, compare) -> np.ndarray:
@@ -83,6 +82,7 @@ def adaBoost_DT(data: np.ndarray, labels: np.ndarray, size=20):
     for i in range(size):
         error, best_feature, predict_labels = create_single_node(data, labels, D)
 
+        # 根据公式更新求出alpha,更新样本权重
         alpha = (np.log((1 - error) / max(1e-16, error))) / 2
         D *= np.exp(- alpha * labels * predict_labels)
         D /= D.sum()
@@ -93,7 +93,7 @@ def adaBoost_DT(data: np.ndarray, labels: np.ndarray, size=20):
 
         # 更新f(x),用已有的分类器投票选举
         f_x += alpha * predict_labels
-        error_size = np.sum(np.sign(f_x) != np.sign(labels))
+        error_size = np.sum(np.sign(f_x) != labels)
         error_rate = error_size / simples_size
         print("第{}轮\n综合投票后 误分类点个数:{}\n样本权值:{}\n".format(i + 1, error_size, list(D)))
 
