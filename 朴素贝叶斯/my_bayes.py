@@ -19,13 +19,11 @@ class My_Byes:
         """
             根据数据集,初始化贝叶斯的先验概率
             :param some:
-            :param data:
             :return:
             """
         self.cols, self.label = some.columns[:-1], some.columns[-1]
         # 计算Y的频率
         self.pro_Y = some[self.label].value_counts(normalize=True)
-        # 列出所有列
 
         # 聚合,有几个属性就聚合几次,最后保存先验概率信息为self.pro_X
         my_dict = {}
