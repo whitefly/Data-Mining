@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 
-class My_Byes:
+class My_Bayes:
     def __init__(self):
         self.pro_Y = None  # Y的频率
         self.pro_X = None  # X的频率
