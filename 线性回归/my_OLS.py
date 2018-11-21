@@ -3,10 +3,10 @@
 基于numpy
 '''
 import numpy as np
-import matplotlib.pyplot as plt
+import pandas as pd
 
 
-class Regressor:
+class Line_Regressor:
     def __init__(self):
         self.W = None
         self.trained = False
@@ -39,17 +39,27 @@ class Regressor:
 
 
 if __name__ == '__main__':
-    data = np.loadtxt('../线性回归数据集/广告数据.txt', delimiter=',')
-    my_X = data[:, 1:-1]
-    my_Y = data[:, -1]
-    reg = Regressor()
+    # data = np.loadtxt('../线性回归数据集/广告数据.txt', delimiter=',')
+    # my_X = data[:, 1:-1]
+    # my_Y = data[:, -1]
+    # reg = Regressor()
+    # reg.fit(my_X, my_Y)
+    # print(reg.coef)
+    # print(reg.intercept)
+
+    # 用二维点来可视化
+    # reg.fit(my_X[:, [0]], my_Y)
+    # plt.scatter(my_X[:, 0], my_Y, alpha=0.7)
+    # demo_x = np.linspace(0, 300, 450)
+    # plt.plot(demo_x, demo_x * reg.coef + reg.intercept, 'r')
+    # plt.show()
+
+    # 复现奇异阵出现的错误
+    data = pd.read_csv('../线性回归数据集/奇异值数据.txt')
+    my_X = data.iloc[:, 1:-1].values
+    my_Y = data.iloc[:, -1].values
+    print(data.head())
+    reg = Line_Regressor()
     reg.fit(my_X, my_Y)
     print(reg.coef)
     print(reg.intercept)
-
-    # 用二维点来可视化
-    reg.fit(my_X[:, [0]], my_Y)
-    plt.scatter(my_X[:, 0], my_Y, alpha=0.7)
-    demo_x = np.linspace(0, 300, 450)
-    plt.plot(demo_x, demo_x * reg.coef + reg.intercept, 'r')
-    plt.show()
