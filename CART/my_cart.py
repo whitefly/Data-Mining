@@ -4,6 +4,7 @@ ID3算法无法处理连续数据,也无法做回归.
 这货是随机森林和gbdt的基础,面试高频考点.木有办法
 基于pandas
 """
+from pprint import pprint
 
 import pandas as pd
 import numpy as np
@@ -34,7 +35,7 @@ class My_cart:
         return data_set.iloc[:, -1].var(ddof=0) * data_set.shape[0]
 
     @staticmethod
-    def choose_best_feature(data_set: pd.DataFrame, threshold_size=1, threshold_delta=1):
+    def choose_best_feature(data_set: pd.DataFrame, threshold_size=1, threshold_delta=0.1):
         """
         这个切分是用于回归
         切分的依据: 切分后label,离差和越小(方差*样本数据),表示越紧凑,分的越好
@@ -49,7 +50,6 @@ class My_cart:
             return None, result.index[0]
 
         # 遍历所有列,找到找到的列
-        row_size, col_size = data_set.shape
         init_error, best_error = My_cart.get_deviation(data_set), np.inf
         best_feature, best_value = None, None
 
@@ -76,6 +76,7 @@ class My_cart:
         name, val = My_cart.choose_best_feature(train_X)
 
         if not name:
+            # name为none,表示不继续切分
             return val
 
         root = {'name': name, 'val': val}
@@ -87,9 +88,14 @@ class My_cart:
 
 
 if __name__ == '__main__':
-    data = [[1, 1, 1], [2, 2, 2], [3, 3, 3]]
-    data = pd.DataFrame(data, columns=['属性1', '属性2', 'label'])
+    # data = pd.read_csv('../CART数据集/ex00.txt', names=['属性1', 'label'], delimiter='\t')
+    data = pd.read_csv('../CART数据集/ex0.txt', names=['fuck', '属性1', 'label'], delimiter='\t')
     cart = My_cart()
-    name, val = cart.choose_best_feature(data)
-    print(name)
-    print(val)
+    node = cart.create_tree(data)
+    pprint(node)
+    plt.scatter(data['属性1'], data['label'], alpha=0.6, s=0.8)
+
+    # 画出树回归图像
+    from Test.Tools import main
+
+    main(node)
