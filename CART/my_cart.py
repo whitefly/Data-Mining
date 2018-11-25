@@ -12,11 +12,10 @@ import matplotlib.pyplot as plt
 
 
 class My_cart:
-    def __init__(self):
-        pass
+    def __init__(self, kind='回归树'):
+        self.kind = kind
 
-    @staticmethod
-    def split_Set(data_set: pd.DataFrame, col_name, col_val):
+    def split_Set(self, data_set: pd.DataFrame, col_name, col_val):
         """
         根据属性的某个值,对数据集进行2分
         :param col_val:  属性的名字
@@ -29,51 +28,85 @@ class My_cart:
         set2 = data_set[~bool_index]
         return set1, set2
 
-    @staticmethod
-    def get_deviation(data_set: pd.DataFrame):
+    def get_reg_error(self, data_set: pd.DataFrame):
+        # 回归树的非叶节点判定准备
         # 获取label列的离差和 -> 有偏方差*样本数
         return data_set.iloc[:, -1].var(ddof=0) * data_set.shape[0]
 
-    @staticmethod
-    def choose_best_feature(data_set: pd.DataFrame, threshold_size=1, threshold_delta=0.1):
+    def get_reg_leaf(self, data_set: pd.DataFrame):
+        # 回归树中用来确定叶节点的值,就是一个固定的Y(Y的均值)
+        return data_set.iloc[:, -1].mean()
+
+    def linerReg(self, data_set: pd.DataFrame):
+        # 做个简单线性回归,是模型树的基础
+        m, n = data_set.shape
+        X = np.mat(np.hstack([data_set.iloc[:, :-1].values, np.ones((m, 1))]))
+        Y = np.mat(data_set.iloc[:, -1].values).T
+        fuck = X.T * X
+
+        if np.linalg.det(fuck) == 0.0:
+            raise ValueError("数据集构成的矩阵为奇异值,无法使用最小二乘法")
+        W = fuck.I * X.T * Y
+        return X, Y, W
+
+    def get_model_error(self, data_set: pd.DataFrame):
+        # 返回残差
+        X, Y, W = self.linerReg(data_set)
+        temp = Y - X * W
+        return (temp.T * temp)[0, 0]
+
+    def get_model_leaf(self, data_set: pd.DataFrame):
+        # 模型树中用来叶节点的值,就是W向量
+        X, Y, W = self.linerReg(data_set)
+        return np.asarray(W).flatten()
+
+    def choose_best_feature(self, data_set: pd.DataFrame, threshold_size=2, threshold_delta=1, leaf_v=get_reg_leaf,
+                            error=get_reg_error):
         """
         这个切分是用于回归
-        切分的依据: 切分后label,离差和越小(方差*样本数据),表示越紧凑,分的越好
+        切分的依据: 切分后label, 横线拟合:离差和越小(方差*样本数据) 斜线拟合:残差和
+        :param error: 用来评定 切分点的好坏
+        :param leaf_v: 返回叶节点的值.用来实现模型树和回归树的代码复用
         :param threshold_delta:
         :param threshold_size:
         :param data_set:
         :return:
         """
+
         # 所有label值相同,不同再分
         result = data.iloc[:, -1].value_counts()
         if result.size == 1:
             return None, result.index[0]
 
-        # 遍历所有列,找到找到的列
-        init_error, best_error = My_cart.get_deviation(data_set), np.inf
+        init_error, best_error = error(data_set), np.inf
         best_feature, best_value = None, None
 
         for name in data_set.columns[:-1]:
-            # 遍历所有列
+            # 遍历所有列,找到最好的列和对应的值
             for value in data_set[name].unique():
-                s1, s2 = My_cart.split_Set(data_set, name, value)
+                s1, s2 = self.split_Set(data_set, name, value)
                 if len(s1) < threshold_size or len(s2) < threshold_size:
                     continue
-                temp_error = My_cart.get_deviation(s1) + My_cart.get_deviation(s2)
-                if temp_error < best_error:
-                    best_feature = name
-                    best_value = value
-                    best_error = temp_error
-
+                try:
+                    temp_error = error(s1) + error(s2)
+                    if temp_error < best_error:
+                        best_feature = name
+                        best_value = value
+                        best_error = temp_error
+                except ValueError:
+                    pass
         delta = init_error - best_error
         if delta < threshold_delta:
             #  下降的误差太小, 不再划分数据,将平均值作为划分值
-            return None, data_set.iloc[:, -1].mean()
+            return None, leaf_v(data_set)
 
         return best_feature, best_value
 
     def create_tree(self, train_X):
-        name, val = My_cart.choose_best_feature(train_X)
+        if self.kind == "回归树":
+            name, val = self.choose_best_feature(train_X, leaf_v=self.get_reg_leaf, error=self.get_reg_error)
+        else:
+            name, val = self.choose_best_feature(train_X, leaf_v=self.get_model_leaf, error=self.get_model_error)
 
         if not name:
             # name为none,表示不继续切分
@@ -81,21 +114,22 @@ class My_cart:
 
         root = {'name': name, 'val': val}
         # 划分数据集
-        s1, s2 = My_cart.split_Set(train_X, name, val)
+        s1, s2 = self.split_Set(train_X, name, val)
         root['left'] = self.create_tree(s1)
         root['right'] = self.create_tree(s2)
         return root
 
 
 if __name__ == '__main__':
-    # data = pd.read_csv('../CART数据集/ex00.txt', names=['属性1', 'label'], delimiter='\t')
-    data = pd.read_csv('../CART数据集/ex0.txt', names=['fuck', '属性1', 'label'], delimiter='\t')
-    cart = My_cart()
+    data = pd.read_csv('../CART数据集/ex0.txt', names=['fuck', '属性1', 'label'], delimiter='\t')  # 直线
+    # data = pd.read_csv('../CART数据集/ex00.txt', names=['属性1', 'label'], delimiter='\t')  #直线
+    # data = pd.read_csv('../CART数据集/斜线1.txt', names=['属性1', 'label'], delimiter='\t') # 线性
+    cart = My_cart("模型树")
     node = cart.create_tree(data)
     pprint(node)
     plt.scatter(data['属性1'], data['label'], alpha=0.6, s=0.8)
 
     # 画出树回归图像
-    from Test.Tools import main
+    from Test.Tools import plot
 
-    main(node)
+    plot(node, cart.kind)
