@@ -12,8 +12,10 @@ import matplotlib.pyplot as plt
 
 
 class My_cart:
-    def __init__(self, kind='回归树'):
+    def __init__(self, kind='回归树', threshold_size=2, threshold_delta=1):
         self.kind = kind
+        self.threshold_size = threshold_size
+        self.threshold_delta = threshold_delta
 
     def split_Set(self, data_set: pd.DataFrame, col_name, col_val):
         """
@@ -29,12 +31,13 @@ class My_cart:
         return set1, set2
 
     def get_reg_error(self, data_set: pd.DataFrame):
-        # 回归树的非叶节点判定准备
-        # 获取label列的离差和 -> 有偏方差*样本数
+        # 回归树:非叶节点判定标准
+        # 返回label列的离差和 -> 有偏方差*样本数
         return data_set.iloc[:, -1].var(ddof=0) * data_set.shape[0]
 
     def get_reg_leaf(self, data_set: pd.DataFrame):
-        # 回归树中用来确定叶节点的值,就是一个固定的Y(Y的均值)
+        # 回归树:叶节点的值,
+        # 就是一个固定的Y(Y的均值)
         return data_set.iloc[:, -1].mean()
 
     def __linerReg(self, data_set: pd.DataFrame):
@@ -50,18 +53,19 @@ class My_cart:
         return X, Y, W
 
     def get_model_error(self, data_set: pd.DataFrame):
+        # 模型树:非叶节点判定标准
         # 返回残差
         X, Y, W = self.__linerReg(data_set)
         temp = Y - X * W
         return (temp.T * temp)[0, 0]
 
     def get_model_leaf(self, data_set: pd.DataFrame):
-        # 模型树中用来叶节点的值,就是W向量
+        # 模型树:用来叶节点的值,
+        # 返回系数W向量
         X, Y, W = self.__linerReg(data_set)
         return np.asarray(W).flatten()
 
-    def choose_best_feature(self, data_set: pd.DataFrame, threshold_size=2, threshold_delta=1, leaf_v=get_reg_leaf,
-                            error=get_reg_error):
+    def choose_best_feature(self, data_set: pd.DataFrame, leaf_v=get_reg_leaf, error=get_reg_error):
         """
         这个切分是用于回归
         切分的依据: 切分后label, 横线拟合:离差和越小(方差*样本数据) 斜线拟合:残差和
@@ -85,7 +89,7 @@ class My_cart:
             # 遍历所有列,找到最好的列和对应的值
             for value in data_set[name].unique():
                 s1, s2 = self.split_Set(data_set, name, value)
-                if len(s1) < threshold_size or len(s2) < threshold_size:
+                if len(s1) < self.threshold_size or len(s2) < self.threshold_size:
                     continue
                 try:
                     temp_error = error(s1) + error(s2)
@@ -96,7 +100,7 @@ class My_cart:
                 except ValueError:
                     pass
         delta = init_error - best_error
-        if delta < threshold_delta:
+        if delta < self.threshold_delta:
             #  下降的误差太小, 不再划分数据,将平均值作为划分值
             return None, leaf_v(data_set)
 
@@ -109,7 +113,7 @@ class My_cart:
             name, val = self.choose_best_feature(train_X, leaf_v=self.get_model_leaf, error=self.get_model_error)
 
         if not name:
-            # name为none,表示不继续切分
+            # name为none,表示不继续切分,直接生成叶节点
             return val
 
         root = {'name': name, 'val': val}
@@ -121,15 +125,16 @@ class My_cart:
 
 
 if __name__ == '__main__':
-    data = pd.read_csv('../CART数据集/ex0.txt', names=['fuck', '属性1', 'label'], delimiter='\t')  # 直线
+    # data = pd.read_csv('../CART数据集/ex0.txt', names=['fuck', '属性1', 'label'], delimiter='\t')  # 直线
     # data = pd.read_csv('../CART数据集/ex00.txt', names=['属性1', 'label'], delimiter='\t')  #直线
-    # data = pd.read_csv('../CART数据集/斜线1.txt', names=['属性1', 'label'], delimiter='\t') # 线性
+    data = pd.read_csv('../CART数据集/斜线1.txt', names=['属性1', 'label'], delimiter='\t')  # 线性
     cart = My_cart("回归树")
     node = cart.create_tree(data)
     pprint(node)
-    plt.scatter(data['属性1'], data['label'], alpha=0.6, s=0.8)
-
-    # 画出树回归图像
+    # 可视化
     from Test.Tools import plot
 
+    # 二维散点
+    plt.scatter(data['属性1'], data['label'], alpha=0.6, s=0.8)
+    # 多条拟合直线
     plot(node, cart.kind)
