@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 
-pd_data = pd.read_csv('../决策树数据集/西瓜书2.0.txt', delimiter='\t')
+pd_data = pd.read_csv('../ID3决策树_数据集/西瓜书2.0.txt', delimiter='\t')
 
 np_data = pd_data.values
 

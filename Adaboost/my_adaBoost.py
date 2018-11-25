@@ -110,6 +110,6 @@ if __name__ == '__main__':
 
     # some = [[1, 2.1], [2, 1.1], [1.3, 1], [1, 1], [2, 1]]
     # some_labels = [1.0, 1.0, -1.0, -1.0, 1.0]
-    # with open('../Adaboost数据集/机器学习实战.txt', 'w') as f:
+    # with open('../Adaboost_数据集/机器学习实战.txt', 'w') as f:
     #     for i in range(len(some)):
     #         f.write("{},{},{}\n".format(*some[i], some_labels[i]))

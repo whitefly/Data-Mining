@@ -6,7 +6,7 @@ import numpy as np
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 
-data = loadtxt('../降维数据集/实战数据集.txt', 'row')  # 需要单个数据为行向量
+data = loadtxt('../降维_数据集/实战数据集.txt', 'row')  # 需要单个数据为行向量
 
 pca = PCA(n_components=1)  # 设置k
 new_data = pca.fit_transform(data)  # 转化数据

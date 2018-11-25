@@ -39,7 +39,7 @@ class Line_Regressor:
 
 
 if __name__ == '__main__':
-    # data = np.loadtxt('../线性回归数据集/广告数据.txt', delimiter=',')
+    # data = np.loadtxt('../线性回归_数据集/广告数据.txt', delimiter=',')
     # my_X = data[:, 1:-1]
     # my_Y = data[:, -1]
     # reg = Regressor()
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     # plt.show()
 
     # 复现奇异阵出现的错误
-    data = pd.read_csv('../线性回归数据集/奇异值数据.txt')
+    data = pd.read_csv('../线性回归_数据集/奇异值数据.txt')
     my_X = data.iloc[:, 1:-1].values
     my_Y = data.iloc[:, -1].values
     print(data.head())

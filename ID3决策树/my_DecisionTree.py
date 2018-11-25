@@ -91,7 +91,7 @@ def create_tree(data: pd.DataFrame) -> dict:
 
 
 if __name__ == '__main__':
-    basefold = '../决策树数据集/'
+    basefold = '../ID3决策树_数据集/'
     # data = pd.read_csv(basefold+'实战1.txt') #<实战>数据1
     # data = pd.read_csv(basefold+'实战2.txt') #<实战>数据2
     data = pd.read_csv(basefold + '西瓜书2.0.txt', delimiter='\t')  # <西瓜书>数据2.0

@@ -15,11 +15,11 @@ def func(w, x):
     return x * w[0] + w[1]
 
 
-def plot(tree, kind='回归树'):
+def plot(tree, kind='回归树', minx=0, maxx=1):
     # 用来画出回归树
     result1 = []
     go_through(tree, None, None, result1)
-    limit_l, limit_r = 0, 1
+    limit_l, limit_r = minx, maxx
     for leaf in result1:
         # 处理边界的none值
         y, (x1, x2) = leaf

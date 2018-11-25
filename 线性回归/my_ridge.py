@@ -43,7 +43,7 @@ class Ridge_Regressor:
 
 
 if __name__ == '__main__':
-    data = pd.read_csv('../线性回归数据集/广告数据.txt')
+    data = pd.read_csv('../线性回归_数据集/广告数据.txt')
     my_X = data.iloc[:, 1:-1].values
     my_Y = data.iloc[:, -1].values
 

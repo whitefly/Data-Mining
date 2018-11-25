@@ -56,7 +56,7 @@ class My_Bayes:
 
 if __name__ == '__main__':
     clf = My_Byes()
-    data = pd.read_csv('../朴素贝叶斯数据集/统计学习方法.txt')
+    data = pd.read_csv('../朴素贝叶斯_数据集/统计学习方法.txt')
     clf.train(data)
 
     new_one = pd.Series([2, 'S'], index=['X1', 'X2'])

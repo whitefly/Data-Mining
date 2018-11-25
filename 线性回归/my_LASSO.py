@@ -108,7 +108,7 @@ def normal(X: pd.DataFrame):
 
 
 if __name__ == '__main__':
-    data = normal(pd.read_csv('../线性回归数据集/广告数据.txt', names=['id', 'tv', 'newspaper', 'radio', 'sales'], index_col='id'))
+    data = normal(pd.read_csv('../线性回归_数据集/广告数据.txt', names=['id', 'tv', 'newspaper', 'radio', 'sales'], index_col='id'))
     # reg = my_lasso()
     # # 画出坐标下降法的轨迹图
     # alphas = np.logspace(-4, 6, 100)

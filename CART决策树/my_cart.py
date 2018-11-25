@@ -125,10 +125,12 @@ class My_cart:
 
 
 if __name__ == '__main__':
-    # data = pd.read_csv('../CART数据集/ex0.txt', names=['fuck', '属性1', 'label'], delimiter='\t')  # 直线
-    # data = pd.read_csv('../CART数据集/ex00.txt', names=['属性1', 'label'], delimiter='\t')  #直线
-    data = pd.read_csv('../CART数据集/斜线1.txt', names=['属性1', 'label'], delimiter='\t')  # 线性
-    cart = My_cart("回归树")
+    kind = '模型树'
+    # data = pd.read_csv('../CART决策树_数据集/ex0.txt', names=['fuck', '属性1', 'label'], delimiter='\t')  # 直线
+    # data = pd.read_csv('../CART决策树_数据集/ex00.txt', names=['属性1', 'label'], delimiter='\t')  #直线
+    # data = pd.read_csv('../CART决策树_数据集/斜线1.txt', names=['属性1', 'label'], delimiter='\t')  # 线性
+    data = pd.read_csv('../CART决策树_数据集/自行车数据.txt', names=['属性1', 'label'], delimiter='\t')  # 线性
+    cart = My_cart(kind)
     node = cart.create_tree(data)
     pprint(node)
     # 可视化
@@ -137,4 +139,5 @@ if __name__ == '__main__':
     # 二维散点
     plt.scatter(data['属性1'], data['label'], alpha=0.6, s=0.8)
     # 多条拟合直线
-    plot(node, cart.kind)
+    min_x, max_x = data['属性1'].min(), data['属性1'].max()
+    plot(node, cart.kind, min_x, max_x)
