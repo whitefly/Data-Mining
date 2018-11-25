@@ -37,7 +37,7 @@ class My_cart:
         # 回归树中用来确定叶节点的值,就是一个固定的Y(Y的均值)
         return data_set.iloc[:, -1].mean()
 
-    def linerReg(self, data_set: pd.DataFrame):
+    def __linerReg(self, data_set: pd.DataFrame):
         # 做个简单线性回归,是模型树的基础
         m, n = data_set.shape
         X = np.mat(np.hstack([data_set.iloc[:, :-1].values, np.ones((m, 1))]))
@@ -51,13 +51,13 @@ class My_cart:
 
     def get_model_error(self, data_set: pd.DataFrame):
         # 返回残差
-        X, Y, W = self.linerReg(data_set)
+        X, Y, W = self.__linerReg(data_set)
         temp = Y - X * W
         return (temp.T * temp)[0, 0]
 
     def get_model_leaf(self, data_set: pd.DataFrame):
         # 模型树中用来叶节点的值,就是W向量
-        X, Y, W = self.linerReg(data_set)
+        X, Y, W = self.__linerReg(data_set)
         return np.asarray(W).flatten()
 
     def choose_best_feature(self, data_set: pd.DataFrame, threshold_size=2, threshold_delta=1, leaf_v=get_reg_leaf,
@@ -124,7 +124,7 @@ if __name__ == '__main__':
     data = pd.read_csv('../CART数据集/ex0.txt', names=['fuck', '属性1', 'label'], delimiter='\t')  # 直线
     # data = pd.read_csv('../CART数据集/ex00.txt', names=['属性1', 'label'], delimiter='\t')  #直线
     # data = pd.read_csv('../CART数据集/斜线1.txt', names=['属性1', 'label'], delimiter='\t') # 线性
-    cart = My_cart("模型树")
+    cart = My_cart("回归树")
     node = cart.create_tree(data)
     pprint(node)
     plt.scatter(data['属性1'], data['label'], alpha=0.6, s=0.8)
