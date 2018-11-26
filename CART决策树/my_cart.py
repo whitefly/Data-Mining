@@ -128,8 +128,9 @@ if __name__ == '__main__':
     kind = '模型树'
     # data = pd.read_csv('../CART决策树_数据集/ex0.txt', names=['fuck', '属性1', 'label'], delimiter='\t')  # 直线
     # data = pd.read_csv('../CART决策树_数据集/ex00.txt', names=['属性1', 'label'], delimiter='\t')  #直线
-    # data = pd.read_csv('../CART决策树_数据集/斜线1.txt', names=['属性1', 'label'], delimiter='\t')  # 线性
+    # data = pd.read_csv('../CART决策树_数据集集/斜线1.txt', names=['属性1', 'label'], delimiter='\t')  # 线性
     data = pd.read_csv('../CART决策树_数据集/自行车数据.txt', names=['属性1', 'label'], delimiter='\t')  # 线性
+
     cart = My_cart(kind)
     node = cart.create_tree(data)
     pprint(node)
