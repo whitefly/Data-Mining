@@ -19,7 +19,7 @@ test_data.to_csv('/Users/zhouang/Desktop/数据挖掘作业/作业3/test.csv', i
 
 # 发现测试集中的某些电影在训练集中根本不存在,有694部. 意味着只能靠瞎猜
 m1 = set(train_data["movieId"].unique())
-m2 = test_data["movieId"].unique()
+m2 = set(test_data["movieId"].unique())
 gap = m2 - m1
 print(len(gap))
 
@@ -36,7 +36,7 @@ movie_feature = movie_grouped['rating'].agg(
 movie_feature.to_csv('/Users/zhouang/Desktop/数据挖掘作业/作业3/电影特征.csv')  # 存一下
 
 
-# 制作用户特征表:  用户乐观度(大于中位数的数量和频率,小于中位数的数量和频率), 疑似水军
+# 制作用户特征表:  用户乐观度(大于中位数的数量和频率,小于中位数的数量和频率), 疑似水军指标,黑子指标
 def positive_rate(DF):
     # 评分总是高于中位数的概率
     return pd.Series([np.sum((DF['rating'] - DF['中位数']) >= 0) / DF.shape[0], DF.shape[0]], index=['容忍度', '评论个数'])
@@ -177,7 +177,7 @@ total_test = pd.merge(total_test, user_feature, left_on='userId', right_index=Tr
 fill_value = {'评论人数': 1, "平均分": 3, '中位数': 3, '众数': 3, '最高分': 3, '最低分': 3, '黑评率': 0.0, '水军率': 0.0}
 total_test.fillna(fill_value, inplace=True)
 
-# 训练,预测,报错
+# 训练,预测,存储
 select_col = ['评论人数', '平均分', '众数', '中位数', '最高分', '最低分', '容忍度', '评论个数', '高分率', '黑评率', '看过高分电影个数', '水军率', '看过低分电影个数']
 weight_avg.fit(X, Y)
 result = weight_avg.predict(total_test[select_col])
@@ -192,11 +192,17 @@ def sub(x):
         return 5.0
     elif x <= 0.5:
         return 0.5
-    else:
-        return x
+    return x
 
 
 fuker['最后结果'] = fuker['最后结果'].map(sub)
 fuker.rename(columns={'最后结果': 'rating'}, inplace=True)
 # 保存
 fuker.to_csv("/Users/zhouang/Desktop/数据挖掘作业/作业3/预测结果.csv", index=False)
+
+# 后期改进,
+# 1.哪些高分电影,哪些是低分电影,可以搞一个搜索来确定预测最优值的设定这2个值
+# 2.测试集中的独有电影,均分随便认定了一个3分, 这个暂时没想好怎么优化
+# 3.可以引入关联,看哪些用户口味相似. 加入 相似用户所打的平均分作为一个feature
+# 4.聚类也可以尝试下
+# 5.总结: 这个星期还有论文ppt,本部马上还要考试.要是对比其他同学,排名靠前的话,我也没啥动力继续挖特征了,因为比较耗时间..~_~
