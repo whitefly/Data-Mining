@@ -46,10 +46,13 @@ user = pd.merge(train_data, movie_feature, left_on='movieId', right_index=True)
 user_grouped = user.groupby(by='userId')
 user_feature = user_grouped.apply(positive_rate)
 
+high = 3.577777777777778
+low = 2.3111111111111113
+
 
 def high_score(DF):
     # 喜欢打高分的概率
-    row = np.sum((DF['rating'] >= 4)) / DF.shape[0]
+    row = np.sum((DF['rating'] >= high)) / DF.shape[0]
     return pd.Series(row, index=['高分率'])
 
 
@@ -58,9 +61,9 @@ user_feature['高分率'] = user_grouped.apply(high_score)
 
 def get_black(DF):
     # 对高分电影打低分的概率, 4分以上为高分电影
-    good_movie = (DF['平均分'] >= 4)
+    good_movie = (DF['平均分'] >= high)
     good_size = np.sum(good_movie)
-    return pd.Series([np.sum(DF[good_movie]['rating'] < 2.5) / good_size, good_size], index=['黑评率', '看过高分电影个数'])
+    return pd.Series([np.sum(DF[good_movie]['rating'] < low) / good_size, good_size], index=['黑评率', '看过高分电影个数'])
 
 
 user_feature = pd.concat([user_feature, user_grouped.apply(get_black)], axis=1)
@@ -68,9 +71,9 @@ user_feature = pd.concat([user_feature, user_grouped.apply(get_black)], axis=1)
 
 def get_faker(DF):
     # 对大量低分电影打高分
-    bad_movie = (DF['平均分'] <= 2.5)
+    bad_movie = (DF['平均分'] <= low)
     bad_size = np.sum(bad_movie)
-    return pd.Series([np.sum(DF[bad_movie]['rating'] > 4) / bad_size, bad_size], index=['水军率', '看过低分电影个数'])
+    return pd.Series([np.sum(DF[bad_movie]['rating'] > high) / bad_size, bad_size], index=['水军率', '看过低分电影个数'])
 
 
 user_feature = pd.concat([user_feature, user_grouped.apply(get_faker)], axis=1)
@@ -88,6 +91,8 @@ def rmse_cv(model, X, y):
     return rmse
 
 
+# 有些用户没看过好电影 or  垃圾电影. 所以填充为0
+total.fillna({'水军率': 0, '黑评率': 0}, inplace=True)
 X = total[['评论人数', '平均分', '众数', '中位数', '最高分', '最低分', '容忍度', '评论个数', '高分率', '黑评率', '看过高分电影个数', '水军率', '看过低分电影个数']]
 Y = total['rating']
 
@@ -158,23 +163,25 @@ bay = BayesianRidge()
 
 w_ols = 0.02
 w_lasso = 0.03
-w_ridge = 0.25
-w_ela = 0.3
-w_gbr = 0.2
+w_ridge = 0.1
+w_ela = 0.2
+w_gbr = 0.45
 w_bay = 0.2
 
 weight_avg = AverageWeight(mod=[ols, lasso, ridge, ela, gbr, bay],
                            weight=[w_ols, w_lasso, w_ridge, w_ela, w_gbr, w_bay])
 score = rmse_cv(weight_avg, X, Y)
-# rmse=0.8148411905749648,凑合用吧
+# rmse=0.8148411905749648,凑合用吧   调参后为0.8127
 print(score.mean())
 
 # 对test数据进行merge,构成完整的特征
 total_test = pd.merge(test_data, movie_feature, left_on='movieId', right_index=True, how='left')
 total_test = pd.merge(total_test, user_feature, left_on='userId', right_index=True, how='left')
 
-# 填充缺失值,由于有些电影缺失,所以直接采用 3作为平均值
-fill_value = {'评论人数': 1, "平均分": 3, '中位数': 3, '众数': 3, '最高分': 3, '最低分': 3, '黑评率': 0.0, '水军率': 0.0}
+# 填充缺失值,由于有些电影缺失,所以直接采用 3作为平均值,调整了一下最低分
+na_value = 3
+fill_value = {'评论人数': 1, "平均分": na_value, '中位数': na_value, '众数': na_value, '最高分': na_value, '最低分': 1.5, '黑评率': 0.0,
+              '水军率': 0.0}
 total_test.fillna(fill_value, inplace=True)
 
 # 训练,预测,存储
@@ -201,7 +208,7 @@ fuker.rename(columns={'最后结果': 'rating'}, inplace=True)
 fuker.to_csv("/Users/zhouang/Desktop/数据挖掘作业/作业3/预测结果.csv", index=False)
 
 # 后期改进,
-# 1.哪些高分电影,哪些是低分电影,可以搞一个搜索来确定预测最优值的设定这2个值
+# 1.哪些高分电影,哪些是低分电影,可以搞一个搜索来确定预测最优值的设定这2个值, 高分搜索[3.5-4.2],低分搜索[2,2.7之间],最优结果 high:3.578 low:2.311
 # 2.测试集中的独有电影,均分随便认定了一个3分, 这个暂时没想好怎么优化
 # 3.可以引入关联,看哪些用户口味相似. 加入 相似用户所打的平均分作为一个feature
 # 4.聚类也可以尝试下

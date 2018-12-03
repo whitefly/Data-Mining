@@ -55,7 +55,7 @@ class My_Bayes:
 
 
 if __name__ == '__main__':
-    clf = My_Byes()
+    clf = My_Bayes()
     data = pd.read_csv('../朴素贝叶斯_数据集/统计学习方法.txt')
     clf.train(data)
 
