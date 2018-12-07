@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
 # 分离训练集和测试集,
 # 结论:训练集80000*3,(涉及到8372部电影) 测试集20000*3,(涉及到4869部电影),
@@ -9,7 +8,10 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, E
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet, SGDRegressor, BayesianRidge
 from sklearn.svm import SVR, LinearSVR
+from surprise import KNNWithMeans, Reader, Dataset
+from sklearn.model_selection import cross_val_score, GridSearchCV
 
+# 读取数据,分离train和test集
 movie = pd.read_csv("/Users/zhouang/Desktop/数据挖掘作业/question3_recommend.csv")
 test_index = (movie['rating'] == -1)
 test_data = movie[test_index]
@@ -42,6 +44,7 @@ def positive_rate(DF):
     return pd.Series([np.sum((DF['rating'] - DF['中位数']) >= 0) / DF.shape[0], DF.shape[0]], index=['容忍度', '评论个数'])
 
 
+# 分组统计,构造特征
 user = pd.merge(train_data, movie_feature, left_on='movieId', right_index=True)
 user_grouped = user.groupby(by='userId')
 user_feature = user_grouped.apply(positive_rate)
@@ -81,24 +84,34 @@ user_feature = pd.concat([user_feature, user_grouped.apply(get_faker)], axis=1)
 # 把所有特征都汇总到total中
 total = pd.merge(user, user_feature, left_on='userId', right_index=True)
 
+
 # 选定rmse作为指标
-from sklearn.model_selection import cross_val_score, GridSearchCV
-
-
 def rmse_cv(model, X, y):
     # rmse作为评分
     rmse = np.sqrt(-cross_val_score(model, X, y, scoring="neg_mean_squared_error", cv=5))
     return rmse
 
 
-# 有些用户没看过好电影 or  垃圾电影. 所以填充为0
+# 增加协同过滤作为特征
+fuker = KNNWithMeans()
+r = Reader(rating_scale=(0.5, 5))
+data_set = Dataset.load_from_df(train_data, r)
+knn_val = []
+for index, row in train_data.iterrows():
+    user_id, movie_id, rate = row['userId'], row['movieId'], row['rating']
+    predict_rate = fuker.predict(user_id, movie_id, rate).est
+    knn_val.append(predict_rate)
+s = pd.Series(knn_val, index=train_data.index)
+total['协同值'] = s
+
+# 有些用户没看过好电影 or  垃圾电影. 所以将NaN填充为0
 total.fillna({'水军率': 0, '黑评率': 0}, inplace=True)
-X = total[['评论人数', '平均分', '众数', '中位数', '最高分', '最低分', '容忍度', '评论个数', '高分率', '黑评率', '看过高分电影个数', '水军率', '看过低分电影个数']]
+X = total[['评论人数', '平均分', '众数', '中位数', '最高分', '最低分', '容忍度', '评论个数', '高分率', '黑评率', '看过高分电影个数', '水军率', '看过低分电影个数', '协同值']]
 Y = total['rating']
 
-# 使用LASSO,0.80-0.85之间浮动 , 只用平均数大约0.85-0.9之间
+# 不加协同列,使用LASSO,0.80-0.85之间浮动 , 只用平均数大约0.85-0.9之间, 加了协同列在0.63-0.67之间浮动
 # 用其他分类器试试
-# 总结:Extra,SGD,RF 3种树算法效果不好,而且相当耗时.所以不采用.只采用采用简单的线性回归好了
+# 总结:Extra,SGD,RF 训练相当耗时.所以不采用.只采用采用简单的线性回归好了
 models = [LinearRegression(),
           Ridge(),
           Lasso(alpha=0.01, max_iter=1000),
@@ -112,6 +125,7 @@ for name, model in zip(names, models):
     print("{}: {:.6f}, {:.4f}".format(name, score.mean(), score.std()))
 
 
+# 简单超参数搜索
 class grid:
     def __init__(self, model):
         self.model = model
@@ -124,7 +138,6 @@ class grid:
         print(pd.DataFrame(grid_search.cv_results_)[['params', 'mean_test_score', 'std_test_score']])
 
 
-# 简单搜索一下参数,
 # LASSO alpha=0.0001
 grid(Lasso()).grid_get(X, Y, {'alpha': [0.0001, 0.0004, 0.0006, 0.0009], 'max_iter': [1000]})
 # Ridge alpha=0.5
@@ -171,21 +184,36 @@ w_bay = 0.2
 weight_avg = AverageWeight(mod=[ols, lasso, ridge, ela, gbr, bay],
                            weight=[w_ols, w_lasso, w_ridge, w_ela, w_gbr, w_bay])
 score = rmse_cv(weight_avg, X, Y)
-# rmse=0.8148411905749648,凑合用吧   调参后为0.8127
+# rmse=0.8148411905749648,凑合用吧   优化高分为0.8127, 增加协同列后为0.608
 print(score.mean())
 
 # 对test数据进行merge,构成完整的特征
 total_test = pd.merge(test_data, movie_feature, left_on='movieId', right_index=True, how='left')
 total_test = pd.merge(total_test, user_feature, left_on='userId', right_index=True, how='left')
 
+# 增加协同列
+knn_val = []
+for index, row in total_test.iterrows():
+    user_id = row['userId']
+    movie_id = row['movieId']
+    rate = row['rating']
+    predict = fuker.predict(user_id, movie_id, rate)
+    if predict.details['was_impossible']:
+        knn_val.append(None)
+    else:
+        knn_val.append(predict.est)
+s1 = pd.Series(knn_val, index=total_test.index)
+total_test['协同值'] = s1
+
 # 填充缺失值,由于有些电影缺失,所以直接采用 3作为平均值,调整了一下最低分
 na_value = 3
 fill_value = {'评论人数': 1, "平均分": na_value, '中位数': na_value, '众数': na_value, '最高分': na_value, '最低分': 1.5, '黑评率': 0.0,
-              '水军率': 0.0}
+              '水军率': 0.0, '协同值': na_value}
 total_test.fillna(fill_value, inplace=True)
 
 # 训练,预测,存储
-select_col = ['评论人数', '平均分', '众数', '中位数', '最高分', '最低分', '容忍度', '评论个数', '高分率', '黑评率', '看过高分电影个数', '水军率', '看过低分电影个数']
+select_col = ['评论人数', '平均分', '众数', '中位数', '最高分', '最低分', '容忍度', '评论个数', '高分率', '黑评率', '看过高分电影个数', '水军率', '看过低分电影个数',
+              '协同值']
 weight_avg.fit(X, Y)
 result = weight_avg.predict(total_test[select_col])
 total_test['最后结果'] = result
@@ -208,8 +236,6 @@ fuker.rename(columns={'最后结果': 'rating'}, inplace=True)
 fuker.to_csv("/Users/zhouang/Desktop/数据挖掘作业/作业3/预测结果.csv", index=False)
 
 # 后期改进,
-# 1.哪些高分电影,哪些是低分电影,可以搞一个搜索来确定预测最优值的设定这2个值, 高分搜索[3.5-4.2],低分搜索[2,2.7之间],最优结果 high:3.578 low:2.311
+# 1.哪些高分电影,哪些是低分电影,可以搞一个搜索来确定预测最优值的设定这2个值 (结论:高分搜索[3.5-4.2],低分搜索[2,2.7之间],最优结果 high:3.578 low:2.311)
 # 2.测试集中的独有电影,均分随便认定了一个3分, 这个暂时没想好怎么优化
-# 3.可以引入关联,看哪些用户口味相似. 加入 相似用户所打的平均分作为一个feature
-# 4.聚类也可以尝试下
-# 5.总结: 这个星期还有论文ppt,本部马上还要考试.要是对比其他同学,排名靠前的话,我也没啥动力继续挖特征了,因为比较耗时间..~_~
+# 3.可以引入关联,看哪些用户口味相似. 加入 相似用户所打的平均分作为一个feature. (结论:增加协同列,最后交叉验证为0.61,可惜提交时间过了,没有测试,哎😔)
