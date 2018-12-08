@@ -38,5 +38,5 @@ tree.export_graphviz(clf, out_file=dot_data, feature_names=feature_name,
                      class_names=target_name, filled=True, rounded=True,
                      special_characters=True)
 graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
-graph.write_pdf("WineTree.pdf")
+graph.write_pdf("决策树(可视化).pdf")
 print('Visible tree plot saved as pdf.')
