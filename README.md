@@ -31,7 +31,7 @@
 
 Boosting 和 Bagging
 - [x] AdaBoost
-- [ ] GBDT
+- [x] GBDT
 
 
 降维<br>
